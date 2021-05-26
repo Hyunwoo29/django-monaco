@@ -2,7 +2,7 @@
 회원가입 :이메일 아이디 비밀번호"""
 
 class Member(object):
-    
+
     id = ''
     email = ''
     password = ''
