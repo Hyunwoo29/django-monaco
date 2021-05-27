@@ -1,3 +1,4 @@
+import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 
@@ -30,12 +31,20 @@ class Melon(object):
         for i, j in enumerate(self.get_title):
             self.dict[j] = self.get_artist[i]
         print(self.dict)
+    def dic_to_dataframe(self):
+        dt = self.dict
+        self.df = pd.DataFrame.from_dict(dt, orient = 'index')
+        print(self.df)
+
+    def df_to_csv(self):
+        path = './data/melon.csv'
+        self.df.to_csv(path, sep=',', na_rep='NaN')
 
     @staticmethod
     def main():
         melon = Melon()
         while 1:
-            menu = input('0-exit, 1-input time, 2-output')
+            menu = input('0-exit, 1-input time, 2-output 3.dict 4.df변환 5.csv넣기')
             if menu == '0':
                 break
             elif menu == '1':
@@ -46,6 +55,10 @@ class Melon(object):
                 melon.get_ranking()
             elif menu == '3':
                 melon.title_dict()
+            elif menu == '4':
+                melon.dic_to_dataframe()
+            elif menu == '5':
+                melon.df_to_csv()
             else:
                 print('Wrong number')
                 continue
