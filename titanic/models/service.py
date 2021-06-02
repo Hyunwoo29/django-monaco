@@ -1,5 +1,9 @@
 from titanic.models.dataset import Dataset
 import pandas as pd
+import numpy as np
+from sklearn.svm import SVC
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
 
 
 class Service(object):
@@ -21,9 +25,10 @@ class Service(object):
         return this.train['Survived']
 
     @staticmethod
-    def drop_feature(this, feature) -> object:
-        this.train = this.train.drop([feature], axis=1)
-        this.test = this.test.drop([feature], axis=1)
+    def drop_feature(this, *feature) -> object:
+        for i in feature:
+            this.train = this.train.drop([i], axis=1)
+            this.test = this.test.drop([i], axis=1)
         return this
 
     @staticmethod
@@ -31,11 +36,22 @@ class Service(object):
         this.train = this.train.fillna({'Embarked': 'S'})
         this.test = this.test.fillna({'Embarked': 'S'})
         this.train['Embarked'] = this.train['Embarked'].map({'S': 1, 'C': 2, 'Q': 3})
+        this.test['Embarked'] = this.test['Embarked'].map({'S': 1, 'C': 2, 'Q': 3})
         return this
 
     @staticmethod
-    def fare_band_fill_na(this) -> object:
+    def fare_ordinal(this) -> object:
+        this.test['Fare'] = this.test['Fare'].fillna(1)
+        this.train['FareBand'] = pd.qcut(this.train['Fare'], 4)
+        # bins = pd.qcut(this.train['Fare'], 4, retbins=True)
+        # print(f'quct 으로 bins 값 설정 {this.train.head(10)}')
+        bins = [-1, 8, 15, 31, np.inf]
+        this.train = this.train.drop(['FareBand'], axis=1)
+        for these in [this.train, this.test]:
+            these['FareBand'] = pd.cut(these['Fare'], bins=bins, labels=[1, 2, 3, 4])
+        this.test['FareBand'] = this.test['FareBand'].fillna(1)
         return this
+
 
     @staticmethod
     def title_norminal(this) -> object:
@@ -58,8 +74,8 @@ class Service(object):
     def gender_norminal(this) -> object:
         combine = [this.train, this.test]
         gender_mapping = {'male': 0, 'female': 1}
-        for dataset in combine:
-            dataset['Gender'] = dataset['Sex'].map(gender_mapping)
+        for these in combine:
+            these['Gender'] = these['Sex'].map(gender_mapping)
 
         this.train = combine[0]
         this.test = combine[1]
@@ -68,11 +84,36 @@ class Service(object):
 
     @staticmethod
     def age_ordinal(this) -> object:
+        train = this.train
+        test = this.test
+        train['Age'] = train['Age'].fillna(-0.5)
+        test['Age'] = test['Age'].fillna(-0.5)
+        bins = [-1, 0, 5, 12, 18, 24, 35, 60, np.inf]
+        labels = ['Unknown', 'Baby', 'Child', 'Teenager', 'Student', 'Young Adult', 'Adult', 'Senior']
+        age_title_mapping = {'Unknown': 0, 'Baby': 1, 'Child': 2, 'Teenager': 3, 'Student': 4, 'Young Adult': 5,
+                             'Adult': 6, 'Senior': 7}
+        for i in train, test:
+            i['AgeGroup'] = pd.cut(i['Age'], bins=bins, labels=labels)
+            i['AgeGroup'] = i['AgeGroup'].map(age_title_mapping)
+
         return this
 
+
     @staticmethod
-    def create_k_fold(this) -> object:
-        return
+    def create_k_fold() -> object:
+        return KFold(n_splits=10, shuffle=True, random_state=0)
+
+    @staticmethod
+    def accuracy_by_svm(this):
+        score = cross_val_score(SVC(),
+                                this.train,
+                                this.label,
+                                cv=KFold(n_splits=10,
+                                         shuffle=True,
+                                         random_state=0),
+                                n_jobs=1,
+                                scoring='accuracy')
+        return round(np.mean(score) * 100, 2)
 
     # fare_band_norminal
     # title_norminal

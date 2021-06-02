@@ -18,10 +18,9 @@ if __name__ == '__main__':
             plot.draw_embarked()
         elif m == '2':
             df = controller.modeling('train.csv', 'test.csv')
-
         elif m == '3':
-            pass
+            controller.learning('train.csv', 'test.csv')
         elif m == '4':
-            pass
+            controller.submit('train.csv', 'test.csv')
         else:
             continue
